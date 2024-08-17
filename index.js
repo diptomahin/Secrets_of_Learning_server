@@ -66,6 +66,43 @@ async function run() {
       const result = await usersCollection.findOne(query);
       res.send(result);
   })
+ 
+  //Enrolled Courses
+  app.get('/all-users/:id/enrolled', async (req, res) => {
+    const id = req.params.id;
+
+      // Convert the id parameter to a MongoDB ObjectId
+      const query = { _id: new ObjectId(id) };
+  
+      // Find the user by their _id
+      const user = await usersCollection.findOne(query);
+  
+      if (user) {
+        // Send the Enrolled array as the response
+        res.send(user.Enrolled || []);
+      } else {
+        res.status(404).send({ message: "User not found" });
+      }
+
+  });
+
+  app.put('/all-users/:id/enrolled', async (req, res) => {
+    const id = req.params.id;
+    const newEnrollment = req.body; // The new course to be added
+  
+    const query = { _id: new ObjectId(id) };
+      const update = {
+        $push: { Enrolled: newEnrollment } // Add the new course to the Enrolled array
+      };
+  
+      const result = await usersCollection.updateOne(query, update);
+  
+      if (result.matchedCount > 0) {
+        res.send({ message: "Enrollment updated successfully", result });
+      } else {
+        res.status(404).send({ message: "User not found" });
+      }
+  });
 
 
 
