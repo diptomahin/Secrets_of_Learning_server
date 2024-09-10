@@ -66,6 +66,24 @@ async function run() {
       const result = await usersCollection.findOne(query);
       res.send(result);
   })
+
+  // update user data
+    
+  app.put('/all-users/:id', async (req, res) => {
+    const id = req.params.id;
+    const updatedProfile = req.body;
+    const filter = { _id: new ObjectId(id) };
+    const updateDoc = {
+        $set: {
+            displayName: updatedProfile.displayName,
+            phone: updatedProfile.phone,
+            address: updatedProfile.address,
+            photoURL: updatedProfile.photoURL
+        },
+    };
+    const result = await usersCollection.updateOne(filter, updateDoc);
+    res.send(result);
+});
  
   //Enrolled Courses
   app.get('/all-users/:id/enrolled', async (req, res) => {
