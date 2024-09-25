@@ -4,11 +4,18 @@ const app = express();
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+// const cloudinary = require('cloudinary').v2;
 
 //middleware
 app.use(cors());
 app.use(express.json());
 
+// // Cloudinary configuration
+// cloudinary.config({
+//   cloud_name: 'your_cloud_name',
+//   api_key: 'your_api_key',
+//   api_secret: 'your_api_secret',
+// });
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.d2rf7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -27,6 +34,7 @@ async function run() {
     await client.connect();
 
     const courseCollection = client.db('fujiamaDB').collection('all-courses');
+    const liveCourseCollection = client.db('fujiamaDB').collection('live-courses');
     const usersCollection = client.db('fujiamaDB').collection('all-users');
 
     //courses section section
@@ -36,7 +44,34 @@ async function run() {
       res.send(result);
       //   console.log(result);
     })
+    app.post('/all-courses', async (req, res) => {
+      const course = req.body;
+      
+      try {
+        const result = await courseCollection.insertOne(course);
+        return res.send(result);
+      } catch (error) {
+        return res.status(500).send({ message: "Failed to add course", error });
+      }
+    });
 
+    //live course
+    app.get('/live-courses', async (req, res) => {
+      const cursor = liveCourseCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+      //   console.log(result);
+    })
+    app.post('/live-courses', async (req, res) => {
+      const course = req.body;
+      
+      try {
+        const result = await liveCourseCollection.insertOne(course);
+        return res.send(result);
+      } catch (error) {
+        return res.status(500).send({ message: "Failed to add course", error });
+      }
+    });
 
     //user section
 
