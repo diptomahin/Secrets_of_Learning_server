@@ -36,6 +36,7 @@ async function run() {
     const courseCollection = client.db('fujiamaDB').collection('all-courses');
     const liveCourseCollection = client.db('fujiamaDB').collection('live-courses');
     const usersCollection = client.db('fujiamaDB').collection('all-users');
+    const LiveEnrollmentCollection = client.db('fujiamaDB').collection('live-enroll');
 
     //courses section section
     app.get('/all-courses', async (req, res) => {
@@ -46,7 +47,7 @@ async function run() {
     })
     app.post('/all-courses', async (req, res) => {
       const course = req.body;
-      
+
       try {
         const result = await courseCollection.insertOne(course);
         return res.send(result);
@@ -64,7 +65,7 @@ async function run() {
     })
     app.post('/live-courses', async (req, res) => {
       const course = req.body;
-      
+
       try {
         const result = await liveCourseCollection.insertOne(course);
         return res.send(result);
@@ -72,6 +73,81 @@ async function run() {
         return res.status(500).send({ message: "Failed to add course", error });
       }
     });
+
+    app.get('/live-courses/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await liveCourseCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.put('/live-courses/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const updatedCourse = req.body;
+    
+        // Validate if the id is a valid ObjectId
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ message: 'Invalid course ID format' });
+        }
+    
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            title: updatedCourse.title,
+            trainer: updatedCourse.trainer,
+            description: updatedCourse.description,
+            short_description: updatedCourse.short_description,
+            trailer: updatedCourse.trailer,
+            offer: updatedCourse.offer,
+            price: updatedCourse.price,
+            discount: updatedCourse.discount,
+            status: updatedCourse.status,
+            students: updatedCourse.students,
+            reviews: updatedCourse.reviews,
+            positive_ratings: updatedCourse.positive_ratings,
+            whatYoullLearn: updatedCourse.whatYoullLearn,
+            software: updatedCourse.software,
+            courseFeatures: updatedCourse.courseFeatures,
+            course_type: updatedCourse.course_type
+          }
+        };
+    
+        const result = await liveCourseCollection.updateOne(filter, updateDoc);
+        if (result.modifiedCount > 0) {
+          res.status(200).send({ message: 'Course updated successfully', result });
+        } else {
+          res.status(404).send({ message: 'Course not found or no changes made' });
+        }
+      } catch (error) {
+        console.error('Error updating course:', error);
+        res.status(500).send({ message: 'Failed to update course', error });
+      }
+    });
+    
+
+
+
+    //Enrolled live course
+    app.post('/live-enroll', async (req, res) => {
+      const enrollmentData = req.body; // Expecting { userId, courseId }
+
+      try {
+        // Assuming you have a collection for enrollments
+        const result = await LiveEnrollmentCollection.insertOne(enrollmentData);
+        return res.status(201).send({ message: "Enrollment successful", result });
+      } catch (error) {
+        return res.status(500).send({ message: "Failed to enroll in course", error });
+      }
+    });
+
+    app.get('/live-enroll', async (req, res) => {
+      const cursor = LiveEnrollmentCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+      //   console.log(result);
+    })
+
 
     //user section
 
@@ -100,36 +176,36 @@ async function run() {
       const query = { _id: new ObjectId(id) }
       const result = await usersCollection.findOne(query);
       res.send(result);
-  })
+    })
 
-  // update user data
-    
-  app.put('/all-users/:id', async (req, res) => {
-    const id = req.params.id;
-    const updatedProfile = req.body;
-    const filter = { _id: new ObjectId(id) };
-    const updateDoc = {
+    // update user data
+
+    app.put('/all-users/:id', async (req, res) => {
+      const id = req.params.id;
+      const updatedProfile = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
         $set: {
-            displayName: updatedProfile.displayName,
-            phone: updatedProfile.phone,
-            address: updatedProfile.address,
-            photoURL: updatedProfile.photoURL
+          displayName: updatedProfile.displayName,
+          phone: updatedProfile.phone,
+          address: updatedProfile.address,
+          photoURL: updatedProfile.photoURL
         },
-    };
-    const result = await usersCollection.updateOne(filter, updateDoc);
-    res.send(result);
-});
- 
-  //Enrolled Courses
-  app.get('/all-users/:id/enrolled', async (req, res) => {
-    const id = req.params.id;
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    //Enrolled Courses
+    app.get('/all-users/:id/enrolled', async (req, res) => {
+      const id = req.params.id;
 
       // Convert the id parameter to a MongoDB ObjectId
       const query = { _id: new ObjectId(id) };
-  
+
       // Find the user by their _id
       const user = await usersCollection.findOne(query);
-  
+
       if (user) {
         // Send the Enrolled array as the response
         res.send(user.Enrolled || []);
@@ -137,25 +213,25 @@ async function run() {
         res.status(404).send({ message: "User not found" });
       }
 
-  });
+    });
 
-  app.put('/all-users/:id/enrolled', async (req, res) => {
-    const id = req.params.id;
-    const newEnrollment = req.body; // The new course to be added
-  
-    const query = { _id: new ObjectId(id) };
+    app.put('/all-users/:id/enrolled', async (req, res) => {
+      const id = req.params.id;
+      const newEnrollment = req.body; // The new course to be added
+
+      const query = { _id: new ObjectId(id) };
       const update = {
         $push: { Enrolled: newEnrollment } // Add the new course to the Enrolled array
       };
-  
+
       const result = await usersCollection.updateOne(query, update);
-  
+
       if (result.matchedCount > 0) {
         res.send({ message: "Enrollment updated successfully", result });
       } else {
         res.status(404).send({ message: "User not found" });
       }
-  });
+    });
 
 
 
