@@ -149,7 +149,7 @@ async function run() {
 
       try {
         // Insert data into MongoDB
-        const result = await LiveEnrollmentCollection.insertOne(enrollmentData);
+        // const result = await LiveEnrollmentCollection.insertOne(enrollmentData);
 
         // Prepare data for Google Sheet
         const values = [
