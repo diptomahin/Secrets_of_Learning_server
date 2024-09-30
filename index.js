@@ -5,6 +5,11 @@ require("dotenv").config();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 // const cloudinary = require('cloudinary').v2;
+const { google } = require('googleapis'); // Import googleapis for Sheets API
+const fs = require('fs');
+
+
+
 
 //middleware
 app.use(cors());
@@ -17,6 +22,9 @@ app.use(express.json());
 //   api_secret: 'your_api_secret',
 // });
 
+
+
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.d2rf7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -27,6 +35,17 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+
+// Google Sheets API setup
+const sheetsAuth = new google.auth.GoogleAuth({
+  keyFile: './learnfujiamalivecourse-1dd0c7269e63.json', // Path to your service account key
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'], // Full access to Google Sheets
+});
+
+const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
+const spreadsheetId = '1xSxbwOOA_K8LXIUVK4Zs2DFubT_YJ_6Swn2PV-DLnbQ'; // Google Sheet ID (found in the URL of the sheet)
+
 
 async function run() {
   try {
@@ -85,12 +104,12 @@ async function run() {
       try {
         const id = req.params.id;
         const updatedCourse = req.body;
-    
+
         // Validate if the id is a valid ObjectId
         if (!ObjectId.isValid(id)) {
           return res.status(400).send({ message: 'Invalid course ID format' });
         }
-    
+
         const filter = { _id: new ObjectId(id) };
         const updateDoc = {
           $set: {
@@ -112,7 +131,7 @@ async function run() {
             course_type: updatedCourse.course_type
           }
         };
-    
+
         const result = await liveCourseCollection.updateOne(filter, updateDoc);
         if (result.modifiedCount > 0) {
           res.status(200).send({ message: 'Course updated successfully', result });
@@ -124,8 +143,8 @@ async function run() {
         res.status(500).send({ message: 'Failed to update course', error });
       }
     });
-    
 
+    // Post data in Excel Sheet
 
 
     //Enrolled live course
@@ -135,6 +154,31 @@ async function run() {
       try {
         // Assuming you have a collection for enrollments
         const result = await LiveEnrollmentCollection.insertOne(enrollmentData);
+
+        // Prepare data for Google Sheet
+        const values = [
+          [
+            enrollmentData.name,
+            enrollmentData.birth,
+            enrollmentData.phoneNumber,
+            enrollmentData.email,
+            enrollmentData.address,
+            enrollmentData.transactionNumber,
+            enrollmentData.transactionId,
+            enrollmentData.c_id,
+          ]
+        ];
+
+        // Append data to the Google Sheet
+        await sheets.spreadsheets.values.append({
+          spreadsheetId,
+          range: 'Sheet1!A:H', // Range in the sheet where data will be added (adjust to your sheet)
+          valueInputOption: 'RAW',
+          resource: {
+            values,
+          },
+        });
+
         return res.status(201).send({ message: "Enrollment successful", result });
       } catch (error) {
         return res.status(500).send({ message: "Failed to enroll in course", error });
