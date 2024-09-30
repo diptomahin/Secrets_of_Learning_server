@@ -39,7 +39,7 @@ const client = new MongoClient(uri, {
 
 // Google Sheets API setup
 const sheetsAuth = new google.auth.GoogleAuth({
-  keyFile: `${process.env.GOOGLE_APPLICATION_CREDENTIALS}`, // Path to your service account key
+  keyFile: './learnfujiamalivecourse-1dd0c7269e63.json', // Path to your service account key
   scopes: ['https://www.googleapis.com/auth/spreadsheets'], // Full access to Google Sheets
 });
 
