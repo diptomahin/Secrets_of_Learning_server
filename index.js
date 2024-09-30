@@ -5,7 +5,6 @@ require("dotenv").config();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 // const cloudinary = require('cloudinary').v2;
-const { google } = require('googleapis'); // Import googleapis for Sheets API
 const fs = require('fs');
 
 
@@ -37,10 +36,11 @@ const client = new MongoClient(uri, {
 });
 
 
-// Google Sheets API setup
+const { google } = require('googleapis');
+
 const sheetsAuth = new google.auth.GoogleAuth({
-  keyFile: './learnfujiamalivecourse-1dd0c7269e63.json', // Path to your service account key
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'], // Full access to Google Sheets
+  keyFile: `${process.env.GOOGLE_APPLICATION_CREDENTIALS}`, // Correct path to the key file
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
 const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
@@ -144,15 +144,11 @@ async function run() {
       }
     });
 
-    // Post data in Excel Sheet
-
-
-    //Enrolled live course
     app.post('/live-enroll', async (req, res) => {
-      const enrollmentData = req.body; // Expecting { userId, courseId }
+      const enrollmentData = req.body; // Enrollment data from request
 
       try {
-        // Assuming you have a collection for enrollments
+        // Insert data into MongoDB
         const result = await LiveEnrollmentCollection.insertOne(enrollmentData);
 
         // Prepare data for Google Sheet
@@ -172,16 +168,17 @@ async function run() {
         // Append data to the Google Sheet
         await sheets.spreadsheets.values.append({
           spreadsheetId,
-          range: 'Sheet1!A:H', // Range in the sheet where data will be added (adjust to your sheet)
+          range: 'Sheet1!A:H', // Adjust to your sheet
           valueInputOption: 'RAW',
           resource: {
             values,
           },
         });
 
-        return res.status(201).send({ message: "Enrollment successful", result });
+        return res.status(201).send({ message: "Enrollment successful and added to Google Sheet", result });
       } catch (error) {
-        return res.status(500).send({ message: "Failed to enroll in course", error });
+        console.error('Enrollment Error:', error); // Log the specific error
+        return res.status(500).send({ message: "Failed to enroll in course or add to Google Sheet", error: error.message });
       }
     });
 
