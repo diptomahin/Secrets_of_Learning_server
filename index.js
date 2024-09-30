@@ -39,8 +39,8 @@ const client = new MongoClient(uri, {
 const { google } = require('googleapis');
 
 const sheetsAuth = new google.auth.GoogleAuth({
-  keyFile: `${process.env.GOOGLE_APPLICATION_CREDENTIALS}`, // Correct path to the key file
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY), // Use the key from the environment variable
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'], // Scopes for Google Sheets API
 });
 
 const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
