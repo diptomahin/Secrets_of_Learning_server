@@ -149,11 +149,11 @@ async function run() {
 
     app.post('/live-enroll', async (req, res) => {
       const enrollmentData = req.body;
-    
+
       try {
         // Insert data into MongoDB
         const result = await client.db('fujiamaDB').collection('live-enroll').insertOne(enrollmentData);
-    
+
         // // Prepare data for Google Sheet
         // const values = [
         //   [
@@ -167,7 +167,7 @@ async function run() {
         //     enrollmentData.c_id,
         //   ],
         // ];
-    
+
         // // Append data to the Google Sheet
         // await sheets.spreadsheets.values.append({
         //   spreadsheetId,
@@ -175,7 +175,7 @@ async function run() {
         //   valueInputOption: 'RAW',
         //   resource: { values },
         // });
-    
+
         return res.status(201).send({ message: "Enrollment successful and added to Google Sheet", result });
       } catch (error) {
         console.error('Enrollment Error:', error); // Log the specific error
@@ -189,6 +189,36 @@ async function run() {
       res.send(result);
       //   console.log(result);
     })
+
+    // PUT request to update the status of an enrollment by ID
+    app.put('/live-enroll/:id', async (req, res) => {
+      const enrollmentId = req.params.id;
+      const { status } = req.body; // The new status comes from the request body
+  
+      try {
+          // Find the enrollment by its _id and update its status
+          const filter = { _id: new ObjectId(enrollmentId) };
+          const updateDoc = {
+              $set: { status: status } // Update only the 'status' field
+          };
+  
+          const result = await LiveEnrollmentCollection.updateOne(filter, updateDoc);
+  
+          if (result.matchedCount === 0) {
+              return res.status(404).send({ message: 'Enrollment not found' });
+          }
+  
+          res.send({
+              message: 'Enrollment status updated successfully',
+              result: result
+          });
+      } catch (error) {
+          res.status(500).send({
+              message: 'Failed to update enrollment status',
+              error: error.message
+          });
+      }
+  });
 
 
     //user section
