@@ -13,7 +13,7 @@ const fs = require('fs');
 //middleware
 app.use(cors());
 app.use(express.json());
-
+app.use(bodyParser.json());
 // // Cloudinary configuration
 // cloudinary.config({
 //   cloud_name: 'your_cloud_name',
@@ -36,15 +36,18 @@ const client = new MongoClient(uri, {
 });
 
 
-const { google } = require('googleapis');
+// const { google } = require('googleapis');
 
-const sheetsAuth = new google.auth.GoogleAuth({
-  keyFile: `${process.env.GOOGLE_APPLICATION_CREDENTIALS}`, // Path to your service account key
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-});
+// Parse the service account JSON key from the environment variable
+// const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
 
-const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
-const spreadsheetId = '1xSxbwOOA_K8LXIUVK4Zs2DFubT_YJ_6Swn2PV-DLnbQ'; // Google Sheet ID (found in the URL of the sheet)
+// const sheetsAuth = new google.auth.GoogleAuth({
+//   credentials, // Use credentials directly from the environment variable
+//   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+// });
+
+// const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
+// const spreadsheetId = '1xSxbwOOA_K8LXIUVK4Zs2DFubT_YJ_6Swn2PV-DLnbQ'; // Google Sheet ID (found in the URL of the sheet)
 
 
 async function run() {
@@ -145,36 +148,34 @@ async function run() {
     });
 
     app.post('/live-enroll', async (req, res) => {
-      const enrollmentData = req.body; // Enrollment data from request
-
+      const enrollmentData = req.body;
+    
       try {
         // Insert data into MongoDB
-        const result = await LiveEnrollmentCollection.insertOne(enrollmentData);
-
-        // Prepare data for Google Sheet
-        const values = [
-          [
-            enrollmentData.name,
-            enrollmentData.birth,
-            enrollmentData.phoneNumber,
-            enrollmentData.email,
-            enrollmentData.address,
-            enrollmentData.transactionNumber,
-            enrollmentData.transactionId,
-            enrollmentData.c_id,
-          ]
-        ];
-
-        // Append data to the Google Sheet
-        await sheets.spreadsheets.values.append({
-          spreadsheetId,
-          range: 'Sheet1!A:H', // Adjust to your sheet
-          valueInputOption: 'RAW',
-          resource: {
-            values,
-          },
-        });
-
+        const result = await client.db('fujiamaDB').collection('live-enroll').insertOne(enrollmentData);
+    
+        // // Prepare data for Google Sheet
+        // const values = [
+        //   [
+        //     enrollmentData.name,
+        //     enrollmentData.birth,
+        //     enrollmentData.phoneNumber,
+        //     enrollmentData.email,
+        //     enrollmentData.address,
+        //     enrollmentData.transactionNumber,
+        //     enrollmentData.transactionId,
+        //     enrollmentData.c_id,
+        //   ],
+        // ];
+    
+        // // Append data to the Google Sheet
+        // await sheets.spreadsheets.values.append({
+        //   spreadsheetId,
+        //   range: 'Sheet1!A:H', // Adjust to your sheet's range
+        //   valueInputOption: 'RAW',
+        //   resource: { values },
+        // });
+    
         return res.status(201).send({ message: "Enrollment successful and added to Google Sheet", result });
       } catch (error) {
         console.error('Enrollment Error:', error); // Log the specific error
