@@ -13,7 +13,7 @@ const fs = require('fs');
 //middleware
 app.use(cors());
 app.use(express.json());
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 // // Cloudinary configuration
 // cloudinary.config({
 //   cloud_name: 'your_cloud_name',
