@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "learnfujiamalivecourse",
+  "private_key_id": "182d730ef1c6cce5eb143f8a5f49070b75a6d3eb",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDTuOtQJr6xnY//\nQkwTNSMb6z3aedrpc7DYbVzvB9p6mgXU2mAJ+DCzEw8bBKt7cMwYShFXIeZyQJFr\nSGavK8PQ6McmDXn+kfppPhty5H6w5TtH0nudjlrz2AjC6jo/FEsaitM1/yEY8VCZ\nVAjou/NJ2aEQDPNVouJDrX0HCOpd8DtSgPogguJNw1kIx/MYnnMW5znoGZsj+aJw\nLzhvB5KHRj+ArybtFbf3RlVUtpDd7KKo/YZKhp9vpwvfH4incuPbZ8PV05nn3NtM\nx2NKhjnyHbd6ZEZlh/hrqHpV3l8yv5F+1CT13UmFKlzS7WOEjgSGS6an1j3R7d4X\n5SXsdVYJAgMBAAECggEAD/M+LQliM9zQKJWMyCSoarXH8OHdu1knIULp7asMi1B3\nsH+sHQwo1RDSQkGRjqjig1DvKf6IjyJsoiWv8LHuHFqxCB2bS3GhaRTP+hGbNsXq\nN6C0hdvf379ud4qwTSjA+LStMUPxcSDa5tY1Hp1sOGvQDbbADTtKavlSsjk6eM2Z\ncqY+bRb4Z6XyVAcU93umuOBWNTSs8wQ51R5jFMaI8gKa0PiW8euSNCKP3A0Ou6hH\naylGXhTj07nE2AHx6Zd53IcECENoXfzirGDvbFLUn11FnMmNpKrCOjIGT3iQrApq\n6ViVoDga0qsFHLsmRrP7pLk2Ybrcec15dtM0i1poVQKBgQD3CgDOcBCiu1iFv2cd\nbJoyVm9lv8tyU8LyN4ccvduXbiL5/qBwUeE8dUWT4cVOnzO+PRfeIQqKXfvgCsct\nN2mTSxTvBcv7XKBui161WGQa67XGBLQ8z+WVtv2MIVFpGphX9kOcIwBMxpuiwGA0\nXmkTjdXHQYK1DfXSsl5icT/8DQKBgQDbZvdLNcx7WYTRFZWD6bZ9/HF/o3hEY1Fp\nizsET9rcpYIQStQPwAf5oxHn01z2w9/QtVVoG6CQY9WHl0akLqvegURtOfAfyYjY\nLTAe4FKG0fBF3p/684CO9nQFMDbu/D1rWSxY7H3QJsxwy1weu6ElCzzlbitJk699\n1B2AHHd27QKBgBp1NM7nS7DSFdIFRNru5bjcbwPbvcNZ2zgr4Emgv+MBBbf2oGJH\nMrNR8Ai9lm8sN9N5IZRFv6ZAGJjPLrPWCnWfBffvjAA41GnifVs4w0fq1MYHfPJC\nZdlaBt+6Ncjm80gAdQ9E5GRUpRiSN/uD3QceGrZDeuc/PoO5XMh4Tp0FAoGBANNf\n0NHpw9X2uanCNKjA6mtYYXSJ5h1k3hNj6vjNglrfLX5KySFfbY+JFoAVNtQag6+M\nc/r32uog9KBMEuesezLDsUvV7MyDGk7CwkCM95Uh/20g/VoFbI7PS5mQCOyXoQii\nAcKuHMwEBSSKF3cYZzjMKeAUEqoxGXqNd9psEoBFAoGAWFUWH2K1NRjPigSp6C/5\nllpetCkJv+IRsnQsc/gYPyYdan/RI8GK7eFG/ZnPT624dpjqlC8MuD2uMaXcoyWh\n2qBwcprV8R85m+iBXYyGCDqXxcVbGjIXegFB0+piB2UBtvO6p9TCDTn5bEMDMAq9\nvfnlVCnFYdvQlnRw+HjyE4g=\n-----END PRIVATE KEY-----\n",
+  "client_email": "learnfujiama@learnfujiamalivecourse.iam.gserviceaccount.com",
+  "client_id": "104038637224571813193",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/learnfujiama%40learnfujiamalivecourse.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
