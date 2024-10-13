@@ -154,29 +154,6 @@ async function run() {
       try {
         // Insert data into MongoDB
         const result = await client.db('fujiamaDB').collection('live-enroll').insertOne(enrollmentData);
-
-        // // Prepare data for Google Sheet
-        // const values = [
-        //   [
-        //     enrollmentData.name,
-        //     enrollmentData.birth,
-        //     enrollmentData.phoneNumber,
-        //     enrollmentData.email,
-        //     enrollmentData.address,
-        //     enrollmentData.transactionNumber,
-        //     enrollmentData.transactionId,
-        //     enrollmentData.c_id,
-        //   ],
-        // ];
-
-        // // Append data to the Google Sheet
-        // await sheets.spreadsheets.values.append({
-        //   spreadsheetId,
-        //   range: 'Sheet1!A:H', // Adjust to your sheet's range
-        //   valueInputOption: 'RAW',
-        //   resource: { values },
-        // });
-
         return res.status(201).send({ message: "Enrollment successful and added to Google Sheet", result });
       } catch (error) {
         console.error('Enrollment Error:', error); // Log the specific error
@@ -190,6 +167,23 @@ async function run() {
       res.send(result);
       //   console.log(result);
     })
+
+    app.delete('/live-enroll/:id', async (req, res) => {
+      const enrollmentId = req.params.id;
+    
+      try {
+        const query = { _id: new ObjectId(enrollmentId) }; // Assuming you're using MongoDB ObjectId
+        const result = await LiveEnrollmentCollection.deleteOne(query);
+    
+        if (result.deletedCount === 1) {
+          res.send({ message: 'Enrollment deleted successfully' });
+        } else {
+          res.status(404).send({ message: 'Enrollment not found' });
+        }
+      } catch (error) {
+        res.status(500).send({ message: 'An error occurred while deleting the enrollment', error });
+      }
+    });
 
     // PUT request to update the status of an enrollment by ID
     app.put('/live-enroll/:id', async (req, res) => {
