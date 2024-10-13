@@ -131,7 +131,8 @@ async function run() {
             whatYoullLearn: updatedCourse.whatYoullLearn,
             software: updatedCourse.software,
             courseFeatures: updatedCourse.courseFeatures,
-            course_type: updatedCourse.course_type
+            course_type: updatedCourse.course_type,
+            deadline: updatedCourse.deadline
           }
         };
 
