@@ -1,27 +1,16 @@
 const express = require('express');
 const cors = require('cors');
-const app = express();
-require("dotenv").config();
-const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-// const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
 const fs = require('fs');
+const path = require('path');
+require('dotenv').config();
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const app = express();
+const port = process.env.PORT || 5000;
 
-
-
-
-//middleware
+// middleware
 app.use(cors());
 app.use(express.json());
-// app.use(bodyParser.json());
-// // Cloudinary configuration
-// cloudinary.config({
-//   cloud_name: 'your_cloud_name',
-//   api_key: 'your_api_key',
-//   api_secret: 'your_api_secret',
-// });
-
-
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.d2rf7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -35,20 +24,21 @@ const client = new MongoClient(uri, {
   }
 });
 
-
-// const { google } = require('googleapis');
-
-// Parse the service account JSON key from the environment variable
-// const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
-
-// const sheetsAuth = new google.auth.GoogleAuth({
-//   credentials, // Use credentials directly from the environment variable
-//   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-// });
-
-// const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
-// const spreadsheetId = '1xSxbwOOA_K8LXIUVK4Zs2DFubT_YJ_6Swn2PV-DLnbQ'; // Google Sheet ID (found in the URL of the sheet)
-
+// Multer configuration for video uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir);
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
 
 async function run() {
   try {
@@ -59,7 +49,7 @@ async function run() {
     const liveCourseCollection = client.db('fujiamaDB').collection('live-courses');
     const usersCollection = client.db('fujiamaDB').collection('all-users');
     const LiveEnrollmentCollection = client.db('fujiamaDB').collection('live-enroll');
-
+    const LiveRecordCollection = client.db('fujiamaDB').collection('live-records');
     //courses section section
     app.get('/all-courses', async (req, res) => {
       const cursor = courseCollection.find();
@@ -72,6 +62,27 @@ async function run() {
 
       try {
         const result = await courseCollection.insertOne(course);
+        return res.send(result);
+      } catch (error) {
+        return res.status(500).send({ message: "Failed to add course", error });
+      }
+    });
+
+    // Upload video 
+    app.post('/upload-video', upload.single('file'), (req, res) => {
+      if (!req.file) {
+        return res.status(400).send({ message: 'No video file uploaded' });
+      }
+      const videoPath = `/uploads/${req.file.filename}`;
+      res.send({ url: videoPath });
+    });
+
+    // Recorded video for live course
+    app.post('/live-records', async (req, res) => {
+      const course = req.body;
+
+      try {
+        const result = await LiveRecordCollection.insertOne(course);
         return res.send(result);
       } catch (error) {
         return res.status(500).send({ message: "Failed to add course", error });
@@ -170,11 +181,11 @@ async function run() {
 
     app.delete('/live-enroll/:id', async (req, res) => {
       const enrollmentId = req.params.id;
-    
+
       try {
         const query = { _id: new ObjectId(enrollmentId) }; // Assuming you're using MongoDB ObjectId
         const result = await LiveEnrollmentCollection.deleteOne(query);
-    
+
         if (result.deletedCount === 1) {
           res.send({ message: 'Enrollment deleted successfully' });
         } else {
@@ -189,31 +200,31 @@ async function run() {
     app.put('/live-enroll/:id', async (req, res) => {
       const enrollmentId = req.params.id;
       const { status } = req.body; // The new status comes from the request body
-  
+
       try {
-          // Find the enrollment by its _id and update its status
-          const filter = { _id: new ObjectId(enrollmentId) };
-          const updateDoc = {
-              $set: { status: status } // Update only the 'status' field
-          };
-  
-          const result = await LiveEnrollmentCollection.updateOne(filter, updateDoc);
-  
-          if (result.matchedCount === 0) {
-              return res.status(404).send({ message: 'Enrollment not found' });
-          }
-  
-          res.send({
-              message: 'Enrollment status updated successfully',
-              result: result
-          });
+        // Find the enrollment by its _id and update its status
+        const filter = { _id: new ObjectId(enrollmentId) };
+        const updateDoc = {
+          $set: { status: status } // Update only the 'status' field
+        };
+
+        const result = await LiveEnrollmentCollection.updateOne(filter, updateDoc);
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ message: 'Enrollment not found' });
+        }
+
+        res.send({
+          message: 'Enrollment status updated successfully',
+          result: result
+        });
       } catch (error) {
-          res.status(500).send({
-              message: 'Failed to update enrollment status',
-              error: error.message
-          });
+        res.status(500).send({
+          message: 'Failed to update enrollment status',
+          error: error.message
+        });
       }
-  });
+    });
 
 
     //user section
@@ -301,8 +312,6 @@ async function run() {
     });
 
 
-
-
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -315,6 +324,8 @@ run().catch(console.dir);
 
 
 
+// Serve static video files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/', (req, res) => {
   res.send(' server in running ')
