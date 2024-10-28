@@ -455,7 +455,9 @@ async function run() {
 }
 run().catch(console.dir);
 
-
+app.use(cors({
+  origin: 'http://localhost:5173', // Specify your React app's origin
+}));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   setHeaders: (res, path) => {
