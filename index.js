@@ -9,7 +9,15 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // middleware
-app.use(cors());
+
+const corsOptions = {
+  origin: ['http://localhost:5173', 'https://your-production-domain.com'], // Add your allowed origins here
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // Allow credentials if needed (e.g., cookies)
+  optionsSuccessStatus: 204 // For legacy browser support
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 
@@ -455,9 +463,6 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.use(cors({
-  origin: 'http://localhost:5173', // Specify your React app's origin
-}));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   setHeaders: (res, path) => {
