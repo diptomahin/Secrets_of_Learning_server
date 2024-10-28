@@ -50,6 +50,43 @@ async function run() {
     const usersCollection = client.db('fujiamaDB').collection('all-users');
     const LiveEnrollmentCollection = client.db('fujiamaDB').collection('live-enroll');
     const LiveRecordCollection = client.db('fujiamaDB').collection('live-records');
+    const BannerCollection = client.db('fujiamaDB').collection('home-banner');
+
+    //home-banner
+    app.get('/home-banner', async (req, res) => {
+      const cursor = BannerCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+      //   console.log(result);
+    })
+
+    app.get('/home-banner/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await BannerCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.put('/home-banner/:id', async (req, res) => {
+      const id = req.params.id;
+      const { _id, ...updatedBanner } = req.body; // Destructure _id out to exclude it from the update
+  
+      try {
+          const result = await BannerCollection.updateOne(
+              { _id: new ObjectId(id) },
+              { $set: updatedBanner }
+          );
+  
+          if (result.modifiedCount === 0) {
+              return res.status(404).send({ message: "Banner not found or no changes made." });
+          }
+  
+          return res.send({ message: "Banner updated successfully", result });
+      } catch (error) {
+          return res.status(500).send({ message: "Failed to update banner", error });
+      }
+  });
+
     //courses section section
     app.get('/all-courses', async (req, res) => {
       const cursor = courseCollection.find();
@@ -76,6 +113,37 @@ async function run() {
       const videoPath = `/uploads/${req.file.filename}`;
       res.send({ url: videoPath });
     });
+    
+    //delete video
+    app.delete('/delete-video', (req, res) => {
+      const { url } = req.body;
+
+      if (!url) {
+        return res.status(400).json({ error: 'Video URL is required.' });
+      }
+
+      // Convert the video URL to the server file path
+      const videoPath = path.join(__dirname, 'uploads', url.split('/uploads/')[1]);
+
+      // Check if the file exists, and then delete it
+      fs.access(videoPath, fs.constants.F_OK, (err) => {
+        if (err) {
+          console.error('File does not exist:', videoPath);
+          return res.status(404).json({ error: 'Video not found.' });
+        }
+
+        // Delete the file
+        fs.unlink(videoPath, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error('Error deleting file:', unlinkErr);
+            return res.status(500).json({ error: 'Failed to delete video.' });
+          }
+
+          console.log('File deleted successfully:', videoPath);
+          res.status(200).json({ message: 'Video deleted successfully.' });
+        });
+      });
+    });
 
     // Recorded video for live course
     app.post('/live-records', async (req, res) => {
@@ -88,6 +156,34 @@ async function run() {
         return res.status(500).send({ message: "Failed to add course", error });
       }
     });
+
+    app.put('/live-records/:id', async (req, res) => {
+      const courseId = req.params.id; // Get the ID from the URL
+      const updatedCourse = req.body; // Get the updated course data from the request body
+
+      try {
+        const result = await LiveRecordCollection.updateOne(
+          { _id: new ObjectId(courseId) }, // Find course by ID
+          { $set: updatedCourse } // Update the course with new data
+        );
+
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "Course not found or no changes made." });
+        }
+
+        return res.send({ message: "Course updated successfully", result });
+      } catch (error) {
+        return res.status(500).send({ message: "Failed to update course", error });
+      }
+    });
+
+
+    app.get('/live-records', async (req, res) => {
+      const cursor = LiveRecordCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+      //   console.log(result);
+    })
 
     //live course
     app.get('/live-courses', async (req, res) => {
@@ -128,6 +224,7 @@ async function run() {
         const updateDoc = {
           $set: {
             title: updatedCourse.title,
+            url_id: updatedCourse.url_id,
             trainer: updatedCourse.trainer,
             description: updatedCourse.description,
             short_description: updatedCourse.short_description,
@@ -311,6 +408,42 @@ async function run() {
       }
     });
 
+    app.get('/all-users/:id/live_enroll', async (req, res) => {
+      const id = req.params.id;
+
+      // Convert the id parameter to a MongoDB ObjectId
+      const query = { _id: new ObjectId(id) };
+
+      // Find the user by their _id
+      const user = await usersCollection.findOne(query);
+
+      if (user) {
+        // Send the Enrolled array as the response
+        res.send(user.live_enroll || []);
+      } else {
+        res.status(404).send({ message: "User not found" });
+      }
+
+    });
+
+    app.put('/all-users/:id/live_enroll', async (req, res) => {
+      const id = req.params.id;
+      const newEnrollment = req.body; // The new course to be added
+
+      const query = { _id: new ObjectId(id) };
+      const update = {
+        $push: { live_enroll: newEnrollment } // Add the new course to the Enrolled array
+      };
+
+      const result = await usersCollection.updateOne(query, update);
+
+      if (result.matchedCount > 0) {
+        res.send({ message: "Enrollment updated successfully", result });
+      } else {
+        res.status(404).send({ message: "User not found" });
+      }
+    });
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -324,8 +457,13 @@ run().catch(console.dir);
 
 
 
-// Serve static video files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.mp4')) {
+      res.setHeader('Content-Type', 'video/mp4');
+    }
+  }
+}));
 
 app.get('/', (req, res) => {
   res.send(' server in running ')
