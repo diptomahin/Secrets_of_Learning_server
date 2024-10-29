@@ -10,6 +10,8 @@ const port = process.env.PORT || 5000;
 
 // middleware
 
+// middleware
+
 const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = ['http://localhost:5173', 'https://ishaan.website'];
@@ -27,7 +29,6 @@ const corsOptions = {
 
 // Use CORS middleware
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Pre-flight requests
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   setHeaders: (res, path) => {
