@@ -11,13 +11,17 @@ const port = process.env.PORT || 5000;
 // middleware
 
 const corsOptions = {
-  origin: ['http://localhost:5173', 'https://ishaan.website'], // Add your allowed origins here
+  origin: ['http://localhost:5173', 'https://ishaan.website'], // Your allowed origins
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true, // Allow credentials if needed (e.g., cookies)
-  optionsSuccessStatus: 204 // For legacy browser support
+  credentials: true, 
+  optionsSuccessStatus: 204 
 };
 
+// Use CORS middleware before your routes
 app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   setHeaders: (res, path) => {
@@ -26,6 +30,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
     }
   }
 }));
+
+app.use(express.json({ limit: '5gb' })); // Set to 2GB
+app.use(express.urlencoded({ limit: '5gb', extended: true }));
 app.use(express.json());
 
 
@@ -86,22 +93,22 @@ async function run() {
     app.put('/home-banner/:id', async (req, res) => {
       const id = req.params.id;
       const { _id, ...updatedBanner } = req.body; // Destructure _id out to exclude it from the update
-  
+
       try {
-          const result = await BannerCollection.updateOne(
-              { _id: new ObjectId(id) },
-              { $set: updatedBanner }
-          );
-  
-          if (result.modifiedCount === 0) {
-              return res.status(404).send({ message: "Banner not found or no changes made." });
-          }
-  
-          return res.send({ message: "Banner updated successfully", result });
+        const result = await BannerCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updatedBanner }
+        );
+
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "Banner not found or no changes made." });
+        }
+
+        return res.send({ message: "Banner updated successfully", result });
       } catch (error) {
-          return res.status(500).send({ message: "Failed to update banner", error });
+        return res.status(500).send({ message: "Failed to update banner", error });
       }
-  });
+    });
 
     //courses section section
     app.get('/all-courses', async (req, res) => {
@@ -121,17 +128,22 @@ async function run() {
       }
     });
 
-    // Upload video 
-    app.post('/upload-video', upload.single('file'), (req, res) => {
-      console.log('Upload video endpoint hit'); // Log to check if this endpoint is reached
-      if (!req.file) {
-        return res.status(400).send({ message: 'No video file uploaded' });
+
+
+    app.post('/upload-video', upload.single('file'), async (req, res) => {
+      try {
+        console.log('Upload video endpoint hit');
+        if (!req.file) {
+          return res.status(400).send({ message: 'No video file uploaded' });
+        }
+        const videoPath = `/uploads/${req.file.filename}`;
+        res.send({ url: videoPath });
+      } catch (error) {
+        console.error('Error during video upload:', error);
+        res.status(500).send({ message: 'Failed to upload video', error: error.message });
       }
-      const videoPath = `/uploads/${req.file.filename}`;
-      res.send({ url: videoPath });
     });
-    
-    
+
     //delete video
     app.delete('/delete-video', (req, res) => {
       const { url } = req.body;
