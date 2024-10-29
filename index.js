@@ -47,7 +47,7 @@ const client = new MongoClient(uri, {
   }
 });
 
-// Multer configuration for video uploads
+// Multer configuration for large video uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(__dirname, 'uploads');
@@ -61,7 +61,15 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + path.extname(file.originalname));
   },
 });
-const upload = multer({ storage });
+
+// Set up multer with a larger file size limit
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 * 1024 }, // 5GB file size limit
+});
+
+module.exports = upload;
+
 
 async function run() {
   try {
