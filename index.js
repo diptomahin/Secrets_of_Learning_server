@@ -14,7 +14,7 @@ const port = process.env.PORT || 5000;
 
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = ['http://localhost:5173', 'https://ishaan.website'];
+    const allowedOrigins = ['https://ishaan.website'];
     // Allow requests with no origin, such as mobile apps, or specific allowed origins
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
