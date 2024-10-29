@@ -13,21 +13,11 @@ const port = process.env.PORT || 5000;
 // middleware
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    const allowedOrigins = ['https://ishaan.website'];
-    // Allow requests with no origin, such as mobile apps, or specific allowed origins
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  origin: ['https://ishaan.website', 'http://localhost:5173'], // Allow both origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
-  optionsSuccessStatus: 204,
 };
 
-// Use CORS middleware
 app.use(cors(corsOptions));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
