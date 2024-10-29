@@ -11,13 +11,14 @@ const port = process.env.PORT || 5000;
 // middleware
 
 const corsOptions = {
-  origin: ['http://localhost:5173', 'https://your-production-domain.com'], // Add your allowed origins here
+  origin: ['http://localhost:5173', 'https://ishaan.website'], // Add your allowed origins here
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true, // Allow credentials if needed (e.g., cookies)
   optionsSuccessStatus: 204 // For legacy browser support
 };
 
 app.use(cors(corsOptions));
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   setHeaders: (res, path) => {
     if (path.endsWith('.mp4')) {
@@ -122,12 +123,14 @@ async function run() {
 
     // Upload video 
     app.post('/upload-video', upload.single('file'), (req, res) => {
+      console.log('Upload video endpoint hit'); // Log to check if this endpoint is reached
       if (!req.file) {
         return res.status(400).send({ message: 'No video file uploaded' });
       }
       const videoPath = `/uploads/${req.file.filename}`;
       res.send({ url: videoPath });
     });
+    
     
     //delete video
     app.delete('/delete-video', (req, res) => {
