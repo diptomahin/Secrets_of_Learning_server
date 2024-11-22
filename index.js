@@ -31,53 +31,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Add the video streaming route here
-app.get('/uploads/:filename', (req, res) => {
-  const videoPath = path.join(__dirname, 'uploads', req.params.filename);
-
-  // Check if the file exists
-  fs.stat(videoPath, (err, stats) => {
-    if (err || !stats.isFile()) {
-      return res.status(404).send({ message: 'File not found' });
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.mp4')) {
+      res.setHeader('Content-Type', 'video/mp4');
     }
-
-    const fileSize = stats.size;
-    const range = req.headers.range;
-
-    if (!range) {
-      // If no range header, send the entire file
-      res.writeHead(200, {
-        'Content-Type': 'video/mp4',
-        'Content-Length': fileSize,
-      });
-      fs.createReadStream(videoPath).pipe(res);
-      return;
-    }
-
-    // Parse the range header for partial streaming
-    const parts = range.replace(/bytes=/, '').split('-');
-    const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-
-    if (start >= fileSize || end >= fileSize) {
-      res.status(416).send({
-        message: `Requested range not satisfiable\n${start}-${end}/${fileSize}`,
-      });
-      return;
-    }
-
-    const chunkSize = end - start + 1;
-    const fileStream = fs.createReadStream(videoPath, { start, end });
-
-    res.writeHead(206, {
-      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-      'Accept-Ranges': 'bytes',
-      'Content-Length': chunkSize,
-      'Content-Type': 'video/mp4',
-    });
-
-    fileStream.pipe(res);
-  });
-});
+  }
+}));
 
 app.use(express.json({ limit: '5gb' })); // Set to 2GB
 app.use(express.urlencoded({ limit: '5gb', extended: true }));
