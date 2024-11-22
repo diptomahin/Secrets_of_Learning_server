@@ -13,20 +13,71 @@ const port = process.env.PORT || 5000;
 // middleware
 
 const corsOptions = {
-  origin: ['https://ishaan.website', 'http://localhost:5173'], // Allow both origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: (origin, callback) => {
+    const allowedOrigins = [`https://ishaan.website`];
+    // Allow requests with no origin, such as mobile apps, or specific allowed origins
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
+  optionsSuccessStatus: 204,
 };
 
+// Use CORS middleware
 app.use(cors(corsOptions));
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.mp4')) {
-      res.setHeader('Content-Type', 'video/mp4');
+// Add the video streaming route here
+app.get('/uploads/:filename', (req, res) => {
+  const videoPath = path.join(__dirname, 'uploads', req.params.filename);
+
+  // Check if the file exists
+  fs.stat(videoPath, (err, stats) => {
+    if (err || !stats.isFile()) {
+      return res.status(404).send({ message: 'File not found' });
     }
-  }
-}));
+
+    const fileSize = stats.size;
+    const range = req.headers.range;
+
+    if (!range) {
+      // If no range header, send the entire file
+      res.writeHead(200, {
+        'Content-Type': 'video/mp4',
+        'Content-Length': fileSize,
+      });
+      fs.createReadStream(videoPath).pipe(res);
+      return;
+    }
+
+    // Parse the range header for partial streaming
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+    if (start >= fileSize || end >= fileSize) {
+      res.status(416).send({
+        message: `Requested range not satisfiable\n${start}-${end}/${fileSize}`,
+      });
+      return;
+    }
+
+    const chunkSize = end - start + 1;
+    const fileStream = fs.createReadStream(videoPath, { start, end });
+
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunkSize,
+      'Content-Type': 'video/mp4',
+    });
+
+    fileStream.pipe(res);
+  });
+});
 
 app.use(express.json({ limit: '5gb' })); // Set to 2GB
 app.use(express.urlencoded({ limit: '5gb', extended: true }));
